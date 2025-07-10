@@ -131,7 +131,6 @@ def carregar_dados():
     df = pd.read_excel(output, sheet_name="Base 2025")
     df["data_do_periodo"] = pd.to_datetime(df["data_do_periodo"])
     df["data"] = df["data_do_periodo"].dt.date
-    df["data"] = pd.to_datetime(df["data"], errors="coerce")
     df["mes"] = df["data_do_periodo"].dt.month
     df["ano"] = df["data_do_periodo"].dt.year
     df["pessoa_entregadora_normalizado"] = df["pessoa_entregadora"].apply(normalizar)
@@ -164,17 +163,9 @@ if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
             mes2 = col1.selectbox("2º Mês:", list(range(1, 13)), key="mes2")
             ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano2")
 
-        gerar = st.form_submit_button
-elif modo == "Simplicada (WhatsApp)":
-        col1, col2 = st.columns(2)
-        mes1 = col1.selectbox("1º Mês:", list(range(1, 13)), key="mes3")
-        ano1 = col2.selectbox("1º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano3")
-        mes2 = col1.selectbox("2º Mês:", list(range(1, 13)), key="mes4")
-        ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano4")
+        gerar = st.form_submit_button("🔍 Gerar relatório")
 
-    # Simplicada não usa seleção de mês/ano("🔍 Gerar relatório")
-
-if gerar and nome:
+    if gerar and nome:
         with st.spinner("Gerando relatório..."):
             if modo == "Ver 1 mês":
                 texto = gerar_dados(nome, mes, ano, df)
@@ -192,12 +183,10 @@ if gerar and nome:
                 texto = gerar_dados(nome, None, None, df[df["pessoa_entregadora"] == nome])
                 st.text_area("Resultado:", value=texto or "❌ Nenhum dado encontrado", height=400)
 
-elif modo == "Simplicada (WhatsApp)":
-            texto = gerar_simplificado(nome, df, mes1, ano1, mes2, ano2)
-            st.text_area("Resultado:", value=texto or "❌ Nenhum dado encontrado", height=500)
-
-elif modo == "Simplicada (WhatsApp)":textos = [gerar_dados(nome, m.month, m.year, df) for m in meses]
-st.text_area("Resultado:", value="\n\n".join([t for t in textos if t]), height=700)
+            elif modo == "Simplicada (WhatsApp)":
+                meses = sorted(df["data"].dt.to_period("M").unique())[-2:]
+                textos = [gerar_dados(nome, m.month, m.year, df) for m in meses]
+                st.text_area("Resultado:", value="\n\n".join([t for t in textos if t]), height=700)
 
 # ===== ALERTAS DE FALTAS =====
 if modo == "Alertas de Faltas":
