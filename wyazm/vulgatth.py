@@ -128,11 +128,11 @@ def carregar_dados():
     url = f"https://drive.google.com/uc?id={file_id}"
     output = "Calendarios.xlsx"
     gdown.download(url, output, quiet=True)
-
     df = pd.read_excel(output, sheet_name="Base 2025")
     df["data_do_periodo"] = pd.to_datetime(df["data_do_periodo"])
     df["data"] = df["data_do_periodo"].dt.date
-    df["mes"] = df["data_do_periodo"].dt.month
+    df["data"] = pd.to_datetime(df["data"], errors="coerce")
+df["mes"] = df["data_do_periodo"].dt.month
     df["ano"] = df["data_do_periodo"].dt.year
     df["pessoa_entregadora_normalizado"] = df["pessoa_entregadora"].apply(normalizar)
     return df
