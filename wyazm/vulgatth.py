@@ -196,8 +196,7 @@ if modo == "Alertas de Faltas":
         if entregador.empty:
             continue
 
-	dias = pd.date_range(end=hoje,
-	periods=30.date
+	dias = pd.date_range(end=hoje, periods=30).date
 
         sequencia = 0
         maior_falta = 0
