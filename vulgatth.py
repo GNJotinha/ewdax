@@ -192,7 +192,7 @@ if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
                 texto = gerar_dados(nome, None, None, df[df["pessoa_entregadora"] == nome])
                 st.text_area("Resultado:", value=texto or "❌ Nenhum dado encontrado", height=400)
 
-        elif modo == "Simplicada (WhatsApp)":
+            elif modo == "Simplicada (WhatsApp)":
             texto = gerar_simplificado(nome, df, mes1, ano1, mes2, ano2)
             st.text_area("Resultado:", value=texto or "❌ Nenhum dado encontrado", height=500)
 
