@@ -256,7 +256,7 @@ if modo == "Alertas de Faltas":
             else:
                 sequencia += 1
 
-        if sequencia >= 3:
+        if sequencia >= 4:
             nome_original = entregador["pessoa_entregadora"].iloc[0]
             mensagens.append(
                 f"• {nome_original} – {sequencia} dias consecutivos ausente (última presença: {entregador['data'].max().strftime('%d/%m')})"
