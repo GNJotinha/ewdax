@@ -165,6 +165,13 @@ if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
             ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano2")
 
         gerar = st.form_submit_button
+    elif modo == "Simplicada (WhatsApp)":
+        col1, col2 = st.columns(2)
+        mes1 = col1.selectbox("1º Mês:", list(range(1, 13)), key="mes3")
+        ano1 = col2.selectbox("1º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano3")
+        mes2 = col1.selectbox("2º Mês:", list(range(1, 13)), key="mes4")
+        ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano4")
+
     # Simplicada não usa seleção de mês/ano("🔍 Gerar relatório")
 
     if gerar and nome:
@@ -186,7 +193,7 @@ if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
                 st.text_area("Resultado:", value=texto or "❌ Nenhum dado encontrado", height=400)
 
         elif modo == "Simplicada (WhatsApp)":
-            texto = gerar_simplificado(nome, df)
+            texto = gerar_simplificado(nome, df, mes1, ano1, mes2, ano2)
             st.text_area("Resultado:", value=texto or "❌ Nenhum dado encontrado", height=500)
 
             elif modo == "Simplicada (WhatsApp)":textos = [gerar_dados(nome, m.month, m.year, df) for m in meses]
