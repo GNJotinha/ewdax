@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import gdown
@@ -203,7 +202,7 @@ if modo == "Alertas de Faltas":
         if entregador.empty:
             continue
 
-        dias = pd.date_range(end=hoje, periods=30).date
+        dias = pd.date_range(end=hoje - timedelta(days=1), periods=30).date
         presencas = set(entregador["data"])
 
         sequencia = 0
@@ -213,7 +212,7 @@ if modo == "Alertas de Faltas":
             else:
                 sequencia += 1
 
-        if sequencia >= 3 and hoje not in presencas:
+        if sequencia >= 3:
             nome_original = entregador["pessoa_entregadora"].iloc[0]
             mensagens.append(
                 f"• {nome_original} – {sequencia} dias consecutivos ausente (última presença: {entregador['data'].max().strftime('%d/%m')})"
