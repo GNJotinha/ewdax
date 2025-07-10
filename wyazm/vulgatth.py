@@ -183,10 +183,23 @@ if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
                 texto = gerar_dados(nome, None, None, df[df["pessoa_entregadora"] == nome])
                 st.text_area("Resultado:", value=texto or "❌ Nenhum dado encontrado", height=400)
 
-            elif modo == "Simplicada (WhatsApp)":
-                meses = sorted(df["data"].dt.to_period("M").unique())[-2:]
-                textos = [gerar_dados(nome, m.month, m.year, df) for m in meses]
-                st.text_area("Resultado:", value="\n\n".join([t for t in textos if t]), height=700)
+elif modo == "Simplicada (WhatsApp)":
+    col1, col2 = st.columns(2)
+mes1 = col1.selectbox("1º Mês:", list(range(1, 13)), key="simp_mes1")
+ano1 = col2.selectbox("1º Ano:", sorted(df["ano"].unique(), reverse=True), key="simp_ano1")
+mes2 = col1.selectbox("2º Mês:", list(range(1, 13)), key="simp_mes2")
+ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="simp_ano2")
+
+    gerar_simp = st.form_submit_button("🔍 Gerar relatório")
+
+    if gerar_simp:
+        with st.spinner("Gerando relatório..."):
+            t1 = gerar_dados(nome, mes1, ano1, df)
+            t2 = gerar_dados(nome, mes2, ano2, df)
+            if t1 or t2:
+                st.text_area("Resultado:", value=(t1 or "") + "\n\n" + (t2 or ""), height=700)
+            else:
+                st.error("❌ Nenhum dado encontrado para os dois meses")
 
 # ===== ALERTAS DE FALTAS =====
 if modo == "Alertas de Faltas":
