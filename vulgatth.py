@@ -185,7 +185,6 @@ if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
                 st.text_area("Resultado:", value=texto or "❌ Nenhum dado encontrado", height=400)
 
             elif modo == "Simplicada (WhatsApp)":
-                meses = sorted(df["data"].dt.to_period("M").unique())[-2:]
                 textos = [gerar_dados(nome, m.month, m.year, df) for m in meses]
                 st.text_area("Resultado:", value="\n\n".join([t for t in textos if t]), height=700)
 
