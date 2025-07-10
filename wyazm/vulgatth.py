@@ -190,9 +190,9 @@ ano1 = col2.selectbox("1º Ano:", sorted(df["ano"].unique(), reverse=True), key=
 mes2 = col1.selectbox("2º Mês:", list(range(1, 13)), key="simp_mes2")
 ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="simp_ano2")
 
-    gerar_simp = st.form_submit_button("🔍 Gerar relatório")
+gerar_simp = st.form_submit_button("🔍 Gerar relatório")
 
-    if gerar_simp:
+if gerar_simp:
         with st.spinner("Gerando relatório..."):
             t1 = gerar_dados(nome, mes1, ano1, df)
             t2 = gerar_dados(nome, mes2, ano2, df)
