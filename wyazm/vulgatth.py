@@ -196,9 +196,8 @@ if modo == "Alertas de Faltas":
         if entregador.empty:
             continue
 
-        ult_data = entregador["data"].max()
-        dias = pd.date_range(end=ult_data, periods=30).date
-        presencas = set(entregador["data"])
+	dias = pd.date_range(end=hoje,
+	periods=30.date
 
         sequencia = 0
         maior_falta = 0
@@ -209,7 +208,7 @@ if modo == "Alertas de Faltas":
                 sequencia += 1
                 maior_falta = max(maior_falta, sequencia)
 
-        if maior_falta >= 3:
+        if maior_falta >= 4:
             nome_original = entregador["pessoa_entregadora"].iloc[0]
             mensagens.append(f"• {nome_original} – {maior_falta} dias consecutivos ausente (última presença: {ult_data.strftime('%d/%m')})")
 
