@@ -128,11 +128,11 @@ def carregar_dados():
     url = f"https://drive.google.com/uc?id={file_id}"
     output = "Calendarios.xlsx"
     gdown.download(url, output, quiet=True)
-
     df = pd.read_excel(output, sheet_name="Base 2025")
     df["data_do_periodo"] = pd.to_datetime(df["data_do_periodo"])
     df["data"] = df["data_do_periodo"].dt.date
-    df["mes"] = df["data_do_periodo"].dt.month
+    df["data"] = pd.to_datetime(df["data"], errors="coerce")
+df["mes"] = df["data_do_periodo"].dt.month
     df["ano"] = df["data_do_periodo"].dt.year
     df["pessoa_entregadora_normalizado"] = df["pessoa_entregadora"].apply(normalizar)
     return df
@@ -165,12 +165,12 @@ if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
             ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano2")
 
         gerar = st.form_submit_button
-            elif modo == "Simplicada (WhatsApp)":
-            col1, col2 = st.columns(2)
-            mes1 = col1.selectbox("1º Mês:", list(range(1, 13)), key="mes3")
-            ano1 = col2.selectbox("1º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano3")
-            mes2 = col1.selectbox("2º Mês:", list(range(1, 13)), key="mes4")
-            ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano4")
+    elif modo == "Simplicada (WhatsApp)":
+        col1, col2 = st.columns(2)
+        mes1 = col1.selectbox("1º Mês:", list(range(1, 13)), key="mes3")
+        ano1 = col2.selectbox("1º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano3")
+        mes2 = col1.selectbox("2º Mês:", list(range(1, 13)), key="mes4")
+        ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano4")
 
     # Simplicada não usa seleção de mês/ano("🔍 Gerar relatório")
 
