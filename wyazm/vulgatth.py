@@ -31,6 +31,15 @@ if not st.session_state.logado:
 st.set_page_config(page_title="Painel de Entregadores", page_icon="📋")
 st.sidebar.success(f"Bem-vindo, {st.session_state.usuario}!")
 
+# ===== MENU NA BARRA LATERAL =====
+st.sidebar.title("NÚMEROS ENTREGADORES")
+modo = st.sidebar.radio("Escolha uma opção:", [
+    "Ver 1 mês",
+    "Ver 2 meses",
+    "Ver geral",
+    "Simplicada (WhatsApp)"
+])
+
 # ===== FUNÇÕES =====
 def normalizar(texto):
     if pd.isna(texto): return ""
@@ -78,7 +87,7 @@ def gerar_dados(nome, mes, ano, df):
     dias_no_mes = pd.date_range(start=f"{ano}-{mes:02d}-01", periods=31, freq='D')
     dias_no_mes = dias_no_mes[dias_no_mes.month == mes]
     faltas = len(dias_no_mes) - presencas
-    turnos = presencas
+    turnos = len(dados)
 
     ofertadas = int(dados["numero_de_corridas_ofertadas"].sum())
     aceitas = int(dados["numero_de_corridas_aceitas"].sum())
@@ -115,6 +124,7 @@ def gerar_geral(nome, df):
     max_data = dados["data"].max()
     dias_esperados = (max_data - min_data).days + 1
     faltas = dias_esperados - presencas
+    turnos = len(dados)
 
     ofertadas = int(dados["numero_de_corridas_ofertadas"].sum())
     aceitas = int(dados["numero_de_corridas_aceitas"].sum())
@@ -127,10 +137,10 @@ def gerar_geral(nome, df):
 
     periodo = f"{min_data.strftime('%d/%m/%Y')} a {max_data.strftime('%d/%m/%Y')}"
     return gerar_texto(nome, periodo, dias_esperados, presencas, faltas, tempo_pct,
-                       presencas, ofertadas, aceitas, rejeitadas, completas,
+                       turnos, ofertadas, aceitas, rejeitadas, completas,
                        tx_aceitas, tx_rejeitadas, tx_completas)
 
-# ===== CARREGAR DADOS =====
+# ===== CARREGAR PLANILHA =====
 @st.cache_data
 def carregar_dados():
     file_id = "1Dmmg1R-xmmC0tfi5-1GVS8KLqhZJUqm5"
@@ -148,14 +158,8 @@ def carregar_dados():
 df = carregar_dados()
 entregadores = [""] + sorted(df["pessoa_entregadora"].dropna().unique().tolist())
 
-# ===== INTERFACE =====
+# ===== INTERFACE PRINCIPAL =====
 st.title("📋 Relatório de Entregadores")
-modo = st.radio("Selecione o tipo de relatório:", [
-    "Ver 1 mês",
-    "Comparar 2 meses",
-    "Ver geral",
-    "Simplicada (WhatsApp)"
-])
 
 with st.form("formulario"):
     nome = st.selectbox("Nome do entregador:", entregadores)
@@ -165,7 +169,7 @@ with st.form("formulario"):
         mes = col1.selectbox("Mês:", list(range(1, 13)))
         ano = col2.selectbox("Ano:", sorted(df["ano"].unique(), reverse=True))
 
-    elif modo == "Comparar 2 meses":
+    elif modo == "Ver 2 meses":
         col1, col2 = st.columns(2)
         mes1 = col1.selectbox("1º Mês:", list(range(1, 13)), key="mes1")
         ano1 = col2.selectbox("1º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano1")
@@ -174,13 +178,14 @@ with st.form("formulario"):
 
     gerar = st.form_submit_button("🔍 Gerar relatório")
 
+# ===== RESULTADOS =====
 if gerar and nome != "":
     with st.spinner("Gerando relatório..."):
         if modo == "Ver 1 mês":
             texto = gerar_dados(nome, mes, ano, df)
             st.text_area("Resultado:", value=texto or "❌ Nenhum dado encontrado", height=350)
 
-        elif modo == "Comparar 2 meses":
+        elif modo == "Ver 2 meses":
             t1 = gerar_dados(nome, mes1, ano1, df)
             t2 = gerar_dados(nome, mes2, ano2, df)
             if t1 or t2:
@@ -198,7 +203,7 @@ if gerar and nome != "":
             if dados_entregador.empty:
                 st.error("❌ Nenhum dado encontrado")
             else:
-                ultimos = dados_entregador[["ano", "mes"]].drop_duplicates().sort_values(["ano", "mes"], ascending=False).head(2)
+                ultimos = dados_entregador[["ano", "mes"]].drop_duplicates().sort_values(["ano", "mes"], ascending=True).tail(2)
                 textos = []
                 for _, row in ultimos.iterrows():
                     ano_i = row["ano"]
@@ -211,7 +216,7 @@ if gerar and nome != "":
                     tempo_disp = dados["tempo_segundos"].mean()
                     duracao_media = dados["duracao_segundos"].mean()
                     tempo_pct = round(tempo_disp / duracao_media * 100, 1) if duracao_media else 0.0
-                    turnos = dados["data"].nunique()
+                    turnos = len(dados)
                     ofertadas = int(dados["numero_de_corridas_ofertadas"].sum())
                     aceitas = int(dados["numero_de_corridas_aceitas"].sum())
                     rejeitadas = int(dados["numero_de_corridas_rejeitadas"].sum())
