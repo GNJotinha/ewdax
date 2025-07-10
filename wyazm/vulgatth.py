@@ -142,6 +142,7 @@ def gerar_simplicado(nome, mes, ano, df):
                 "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
     periodo = f"{meses_pt[mes-1]}/{ano}"
     return f"""{nome} – {periodo}
+    
 Tempo online: {tempo_pct}%
 
 Turnos realizados: {turnos}
