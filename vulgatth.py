@@ -164,7 +164,8 @@ if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
             mes2 = col1.selectbox("2º Mês:", list(range(1, 13)), key="mes2")
             ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano2")
 
-        gerar = st.form_submit_button("🔍 Gerar relatório")
+        gerar = st.form_submit_button
+    # Simplicada não usa seleção de mês/ano("🔍 Gerar relatório")
 
     if gerar and nome:
         with st.spinner("Gerando relatório..."):
@@ -183,6 +184,10 @@ if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
             elif modo == "Ver geral":
                 texto = gerar_dados(nome, None, None, df[df["pessoa_entregadora"] == nome])
                 st.text_area("Resultado:", value=texto or "❌ Nenhum dado encontrado", height=400)
+
+        elif modo == "Simplicada (WhatsApp)":
+            texto = gerar_simplificado(nome, df)
+            st.text_area("Resultado:", value=texto or "❌ Nenhum dado encontrado", height=500)
 
             elif modo == "Simplicada (WhatsApp)":textos = [gerar_dados(nome, m.month, m.year, df) for m in meses]
                 st.text_area("Resultado:", value="\n\n".join([t for t in textos if t]), height=700)
