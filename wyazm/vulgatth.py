@@ -195,6 +195,14 @@ if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
             ano1 = col2.selectbox("1º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano1")
             mes2 = col1.selectbox("2º Mês:", list(range(1, 13)), key="mes2")
             ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano2")
+        
+        elif modo == "Simplicada (WhatsApp)":
+            
+            col1, col2 = st.columns(2)
+            mes1 = col1.selectbox("1º Mês:", list(range(1, 13)), key="mes1_simp")
+            ano1 = col2.selectbox("1º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano1_simp")
+            mes2 = col1.selectbox("2º Mês:", list(range(1, 13)), key="mes2_simp")
+            ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano2_simp")
 
         gerar = st.form_submit_button("🔍 Gerar relatório")
 
@@ -215,23 +223,13 @@ if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
             elif modo == "Ver geral":
                 texto = gerar_dados(nome, None, None, df[df["pessoa_entregadora"] == nome])
                 st.text_area("Resultado:", value=texto or "❌ Nenhum dado encontrado", height=400)
-                
+            
             elif modo == "Simplicada (WhatsApp)":
-                with st.form("formulario_simp"):
-                    col1, col2 = st.columns(2)
-                    mes1 = col1.selectbox("1º Mês:", list(range(1, 13)), key="mes1_simp")
-                    ano1 = col2.selectbox("1º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano1_simp")
-                    mes2 = col1.selectbox("2º Mês:", list(range(1, 13)), key="mes2_simp")
-                    ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano2_simp")
-                    gerar = st.form_submit_button("🔍 Gerar relatório")
-
-                if gerar and nome:
-                    with st.spinner("Gerando relatório..."):
-                        t1 = gerar_simplicado(nome, mes1, ano1, df)
-                        t2 = gerar_simplicado(nome, mes2, ano2, df)
-                        if t1 or t2:
+                    t1 = gerar_simplicado(nome, mes1, ano1, df)
+                    t2 = gerar_simplicado(nome, mes2, ano2, df)
+                    if t1 or t2:
                             st.text_area("Resultado:", value="\n\n".join([t for t in [t1, t2] if t]), height=600)
-                        else:
+                    else:
                             st.error("❌ Nenhum dado encontrado")
                             
 # ===== ALERTAS DE FALTAS =====
