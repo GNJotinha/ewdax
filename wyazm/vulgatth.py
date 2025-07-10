@@ -42,7 +42,7 @@ modo = st.sidebar.radio("Escolha uma opção:", [
     "Alertas de Faltas"
 ])
 
-# ===== FUNÇÕES UTILITÁRIAS =====
+# ===== FUNÇÕES =====
 def normalizar(texto):
     if pd.isna(texto): return ""
     return unicodedata.normalize('NFKD', str(texto)).encode('ASCII', 'ignore').decode().lower().strip()
@@ -122,7 +122,7 @@ def gerar_dados(nome, mes, ano, df):
                        turnos, ofertadas, aceitas, rejeitadas, completas,
                        tx_aceitas, tx_rejeitadas, tx_completas)
 
-# ===== LEITURA DA PLANILHA DO GOOGLE DRIVE =====
+# ===== CARREGAR DADOS DO GOOGLE DRIVE =====
 @st.cache_data
 def carregar_dados():
     file_id = "1Dmmg1R-xmmC0tfi5-1GVS8KLqhZJUqm5"
@@ -137,13 +137,17 @@ def carregar_dados():
     df["pessoa_entregadora_normalizado"] = df["pessoa_entregadora"].apply(normalizar)
     return df
 
-# ===== INTERFACE =====
 df = carregar_dados()
-if st.button("🔄 Atualizar dados"):
-    st.cache_data.clear()
-    st.rerun()
-entregadores = sorted(df["pessoa_entregadora"].dropna().unique().tolist())
+entregadores = [""] + sorted(df["pessoa_entregadora"].dropna().unique().tolist())
 
+# ===== ATUALIZAR DADOS (apenas admin) =====
+nivel = USUARIOS.get(st.session_state.usuario, {}).get("nivel", "")
+if nivel == "admin":
+    if st.button("🔄 Atualizar dados"):
+        st.cache_data.clear()
+        st.rerun()
+
+# ===== FORMULÁRIO =====
 if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
     with st.form("formulario"):
         nome = st.selectbox("Nome do entregador:", entregadores)
@@ -203,16 +207,13 @@ if modo == "Alertas de Faltas":
         presencas = set(entregador["data"])
 
         sequencia = 0
-        maior_falta = 0
         for dia in sorted(dias):
             if dia in presencas:
                 sequencia = 0
             else:
                 sequencia += 1
-                maior_falta = max(maior_falta, sequencia)
 
-        # Agora só alerta se a sequência estiver em andamento (começou e não foi quebrada)
-        if sequencia >= 3:
+        if sequencia >= 3 and hoje not in presencas:
             nome_original = entregador["pessoa_entregadora"].iloc[0]
             mensagens.append(
                 f"• {nome_original} – {sequencia} dias consecutivos ausente (última presença: {entregador['data'].max().strftime('%d/%m')})"
