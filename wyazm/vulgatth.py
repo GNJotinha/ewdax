@@ -139,6 +139,9 @@ def carregar_dados():
 
 # ===== INTERFACE =====
 df = carregar_dados()
+if st.button("🔄 Atualizar dados"):
+    st.cache_data.clear()
+    st.rerun()
 entregadores = sorted(df["pessoa_entregadora"].dropna().unique().tolist())
 
 if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
