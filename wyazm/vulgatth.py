@@ -4,9 +4,6 @@ import gdown
 import unicodedata
 from datetime import datetime
 
-# ===== CONFIGURAÇÕES =====
-st.set_page_config(page_title="Painel de Entregadores", page_icon="📋")
-
 # ===== LOGIN =====
 USUARIOS = st.secrets.get("USUARIOS", {})
 
@@ -22,13 +19,16 @@ if not st.session_state.logado:
     usuario = st.text_input("Usuário")
     senha = st.text_input("Senha", type="password")
     if st.button("Entrar"):
-        if autenticar(usuario.lower(), senha):
+        if autenticar(usuario, senha):
             st.session_state.logado = True
             st.session_state.usuario = usuario
+            st.rerun()
         else:
             st.error("Usuário ou senha incorretos")
     st.stop()
 
+# ===== CONFIGURAÇÕES =====
+st.set_page_config(page_title="Painel de Entregadores", page_icon="📋")
 st.sidebar.success(f"Bem-vindo, {st.session_state.usuario}!")
 
 # ===== FUNÇÕES =====
@@ -67,7 +67,8 @@ def gerar_dados(nome, mes, ano, df):
     df["duracao_segundos"] = df["duracao_do_periodo"].apply(tempo_para_segundos)
     dados = df[(df["pessoa_entregadora_normalizado"] == nome_norm) &
                (df["mes"] == mes) & (df["ano"] == ano)]
-    if dados.empty: return None
+    if dados.empty:
+        return None
 
     tempo_disp = dados["tempo_segundos"].mean()
     duracao_media = dados["duracao_segundos"].mean()
@@ -99,7 +100,8 @@ def gerar_dados(nome, mes, ano, df):
 def gerar_geral(nome, df):
     nome_norm = normalizar(nome)
     dados = df[df["pessoa_entregadora_normalizado"] == nome_norm]
-    if dados.empty: return None
+    if dados.empty:
+        return None
 
     dados["tempo_segundos"] = dados["tempo_disponivel_absoluto"].apply(tempo_para_segundos)
     dados["duracao_segundos"] = dados["duracao_do_periodo"].apply(tempo_para_segundos)
@@ -128,13 +130,14 @@ def gerar_geral(nome, df):
                        presencas, ofertadas, aceitas, rejeitadas, completas,
                        tx_aceitas, tx_rejeitadas, tx_completas)
 
-# ===== LEITURA DO ARQUIVO DO DRIVE =====
+# ===== CARREGAR DADOS =====
 @st.cache_data
 def carregar_dados():
     file_id = "1Dmmg1R-xmmC0tfi5-1GVS8KLqhZJUqm5"
     url = f"https://drive.google.com/uc?id={file_id}"
-    gdown.download(url, "Calendarios.xlsx", quiet=True)
-    df = pd.read_excel("Calendarios.xlsx", sheet_name="Base 2025")
+    output = "Calendarios.xlsx"
+    gdown.download(url, output, quiet=True)
+    df = pd.read_excel(output, sheet_name="Base 2025")
     df["data_do_periodo"] = pd.to_datetime(df["data_do_periodo"])
     df["data"] = df["data_do_periodo"].dt.date
     df["mes"] = df["data_do_periodo"].dt.month
@@ -142,12 +145,17 @@ def carregar_dados():
     df["pessoa_entregadora_normalizado"] = df["pessoa_entregadora"].apply(normalizar)
     return df
 
-# ===== INTERFACE PRINCIPAL =====
 df = carregar_dados()
 entregadores = [""] + sorted(df["pessoa_entregadora"].dropna().unique().tolist())
 
+# ===== INTERFACE =====
 st.title("📋 Relatório de Entregadores")
-modo = st.radio("Selecione o tipo de relatório:", ["Ver 1 mês", "Comparar 2 meses", "Ver geral"])
+modo = st.radio("Selecione o tipo de relatório:", [
+    "Ver 1 mês",
+    "Comparar 2 meses",
+    "Ver geral",
+    "Simplicada (WhatsApp)"
+])
 
 with st.form("formulario"):
     nome = st.selectbox("Nome do entregador:", entregadores)
@@ -184,4 +192,46 @@ if gerar and nome != "":
             texto = gerar_geral(nome, df)
             st.text_area("Resultado:", value=texto or "❌ Nenhum dado encontrado", height=400)
 
-        st.success("✅ Pronto! Copie e cole no WhatsApp.")
+        elif modo == "Simplicada (WhatsApp)":
+            nome_norm = normalizar(nome)
+            dados_entregador = df[df["pessoa_entregadora_normalizado"] == nome_norm]
+            if dados_entregador.empty:
+                st.error("❌ Nenhum dado encontrado")
+            else:
+                ultimos = dados_entregador[["ano", "mes"]].drop_duplicates().sort_values(["ano", "mes"], ascending=False).head(2)
+                textos = []
+                for _, row in ultimos.iterrows():
+                    ano_i = row["ano"]
+                    mes_i = row["mes"]
+                    dados = dados_entregador[(dados_entregador["ano"] == ano_i) & (dados_entregador["mes"] == mes_i)].copy()
+                    if dados.empty:
+                        continue
+                    dados["tempo_segundos"] = dados["tempo_disponivel_absoluto"].apply(tempo_para_segundos)
+                    dados["duracao_segundos"] = dados["duracao_do_periodo"].apply(tempo_para_segundos)
+                    tempo_disp = dados["tempo_segundos"].mean()
+                    duracao_media = dados["duracao_segundos"].mean()
+                    tempo_pct = round(tempo_disp / duracao_media * 100, 1) if duracao_media else 0.0
+                    turnos = dados["data"].nunique()
+                    ofertadas = int(dados["numero_de_corridas_ofertadas"].sum())
+                    aceitas = int(dados["numero_de_corridas_aceitas"].sum())
+                    rejeitadas = int(dados["numero_de_corridas_rejeitadas"].sum())
+                    completas = int(dados["numero_de_corridas_completadas"].sum())
+                    tx_aceitas = round(aceitas / ofertadas * 100, 1) if ofertadas else 0.0
+                    tx_rejeitadas = round(rejeitadas / ofertadas * 100, 1) if ofertadas else 0.0
+                    tx_completas = round(completas / aceitas * 100, 1) if aceitas else 0.0
+                    meses_pt = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
+                    periodo = f"{meses_pt[mes_i - 1]}/{ano_i}"
+                    texto = f"""{nome} – {periodo}
+
+Tempo online: {tempo_pct}%
+
+Turnos realizados: {turnos}
+
+Corridas:
+Ofertadas: {ofertadas}
+Aceitas: {aceitas} ({tx_aceitas}%)
+Rejeitadas: {rejeitadas} ({tx_rejeitadas}%)
+Completas: {completas} ({tx_completas}%)"""
+                    textos.append(texto)
+                st.text_area("Resultado:", value="\n\n".join(textos) or "❌ Nenhum dado encontrado", height=700)
