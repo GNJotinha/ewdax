@@ -164,7 +164,7 @@ if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
             mes2 = col1.selectbox("2º Mês:", list(range(1, 13)), key="mes2")
             ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano2")
 
-        gerar = st.form_submit_button   
+        gerar = st.form_submit_button
 elif modo == "Simplicada (WhatsApp)":
         col1, col2 = st.columns(2)
         mes1 = col1.selectbox("1º Mês:", list(range(1, 13)), key="mes3")
