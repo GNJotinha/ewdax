@@ -183,39 +183,34 @@ if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
                 texto = gerar_dados(nome, None, None, df[df["pessoa_entregadora"] == nome])
                 st.text_area("Resultado:", value=texto or "❌ Nenhum dado encontrado", height=400)
 
-elif modo == "Simplicada (WhatsApp)":
-    col1, col2 = st.columns(2)
-mes1 = col1.selectbox("1º Mês:", list(range(1, 13)), key="mes1_simp")
-ano1 = col2.selectbox("1º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano1_simp")
-mes2 = col1.selectbox("2º Mês:", list(range(1, 13)), key="mes2_simp")
-ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano2_simp")
+            elif modo == "Simplicada (WhatsApp)":
+                col1, col2 = st.columns(2)
+    mes1 = col1.selectbox("1º Mês:", list(range(1, 13)), key="mes1_simp")
+    ano1 = col2.selectbox("1º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano1_simp")
+    mes2 = col1.selectbox("2º Mês:", list(range(1, 13)), key="mes2_simp")
+    ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano2_simp")
 
-gerar = st.form_submit_button("🔍 Gerar relatório")
-
-if gerar and nome:
-    with st.spinner("Gerando relatório..."):
-        if modo == "Simplicada (WhatsApp)":
-            def gerar_simplicado(nome, mes, ano, df):
-                nome_norm = normalizar(nome)
-                dados = df[(df["pessoa_entregadora_normalizado"] == nome_norm) &
-                           (df["mes"] == mes) & (df["ano"] == ano)]
-                if dados.empty:
-                    return None
-                tempo_disp = dados["tempo_disponivel_absoluto"].apply(tempo_para_segundos).mean()
-                duracao = dados["duracao_do_periodo"].apply(tempo_para_segundos).mean()
-                tempo_pct = round(tempo_disp / duracao * 100, 1) if duracao else 0.0
-                turnos = len(dados)
-                ofertadas = int(dados["numero_de_corridas_ofertadas"].sum())
-                aceitas = int(dados["numero_de_corridas_aceitas"].sum())
-                rejeitadas = int(dados["numero_de_corridas_rejeitadas"].sum())
-                completas = int(dados["numero_de_corridas_completadas"].sum())
-                tx_aceitas = round(aceitas / ofertadas * 100, 1) if ofertadas else 0.0
-                tx_rejeitadas = round(rejeitadas / ofertadas * 100, 1) if ofertadas else 0.0
-                tx_completas = round(completas / aceitas * 100, 1) if aceitas else 0.0
-                meses_pt = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-                            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
-                periodo = f"{meses_pt[mes-1]}/{ano}"
-                return f"""{nome} – {periodo}
+    def gerar_simplicado(nome, mes, ano, df):
+        nome_norm = normalizar(nome)
+        dados = df[(df["pessoa_entregadora_normalizado"] == nome_norm) &
+                   (df["mes"] == mes) & (df["ano"] == ano)]
+        if dados.empty:
+            return None
+        tempo_disp = dados["tempo_disponivel_absoluto"].apply(tempo_para_segundos).mean()
+        duracao = dados["duracao_do_periodo"].apply(tempo_para_segundos).mean()
+        tempo_pct = round(tempo_disp / duracao * 100, 1) if duracao else 0.0
+        turnos = len(dados)
+        ofertadas = int(dados["numero_de_corridas_ofertadas"].sum())
+        aceitas = int(dados["numero_de_corridas_aceitas"].sum())
+        rejeitadas = int(dados["numero_de_corridas_rejeitadas"].sum())
+        completas = int(dados["numero_de_corridas_completadas"].sum())
+        tx_aceitas = round(aceitas / ofertadas * 100, 1) if ofertadas else 0.0
+        tx_rejeitadas = round(rejeitadas / ofertadas * 100, 1) if ofertadas else 0.0
+        tx_completas = round(completas / aceitas * 100, 1) if aceitas else 0.0
+        meses_pt = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
+        periodo = f"{meses_pt[mes-1]}/{ano}"
+        return f"""{nome} – {periodo}
 Tempo online: {tempo_pct}%
 Turnos realizados: {turnos}
 Corridas:
@@ -225,13 +220,17 @@ Corridas:
 * Completas: {completas} ({tx_completas}%)
 """
 
+    gerar = st.form_submit_button("🔍 Gerar relatório")
+
+    if gerar and nome:
+        with st.spinner("Gerando relatório..."):
             t1 = gerar_simplicado(nome, mes1, ano1, df)
             t2 = gerar_simplicado(nome, mes2, ano2, df)
             if t1 or t2:
                 st.text_area("Resultado:", value="\n\n".join([t for t in [t1, t2] if t]), height=600)
             else:
                 st.error("❌ Nenhum dado encontrado para os dois meses")
-
+                
 # ===== ALERTAS DE FALTAS =====
 if modo == "Alertas de Faltas":
     st.subheader("⚠️ Entregadores com 3+ faltas consecutivas")
