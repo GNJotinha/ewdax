@@ -121,6 +121,38 @@ def gerar_dados(nome, mes, ano, df):
                        turnos, ofertadas, aceitas, rejeitadas, completas,
                        tx_aceitas, tx_rejeitadas, tx_completas)
     
+def gerar_simplicado(nome, mes, ano, df):
+    nome_norm = normalizar(nome)
+    dados = df[(df["pessoa_entregadora_normalizado"] == nome_norm) &
+               (df["mes"] == mes) & (df["ano"] == ano)]
+    if dados.empty:
+        return None
+    tempo_disp = dados["tempo_disponivel_absoluto"].apply(tempo_para_segundos).mean()
+    duracao = dados["duracao_do_periodo"].apply(tempo_para_segundos).mean()
+    tempo_pct = round(tempo_disp / duracao * 100, 1) if duracao else 0.0
+    turnos = len(dados)
+    ofertadas = int(dados["numero_de_corridas_ofertadas"].sum())
+    aceitas = int(dados["numero_de_corridas_aceitas"].sum())
+    rejeitadas = int(dados["numero_de_corridas_rejeitadas"].sum())
+    completas = int(dados["numero_de_corridas_completadas"].sum())
+    tx_aceitas = round(aceitas / ofertadas * 100, 1) if ofertadas else 0.0
+    tx_rejeitadas = round(rejeitadas / ofertadas * 100, 1) if ofertadas else 0.0
+    tx_completas = round(completas / aceitas * 100, 1) if aceitas else 0.0
+    meses_pt = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
+    periodo = f"{meses_pt[mes-1]}/{ano}"
+    return f"""{nome} – {periodo}
+Tempo online: {tempo_pct}%
+
+Turnos realizados: {turnos}
+
+Corridas:
+* Ofertadas: {ofertadas}
+* Aceitas: {aceitas} ({tx_aceitas}%)
+* Rejeitadas: {rejeitadas} ({tx_rejeitadas}%)
+* Completas: {completas} ({tx_completas}%)
+"""
+    
 
 # ===== CARREGAR DADOS DO GOOGLE DRIVE =====
 @st.cache_data
