@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import gdown
@@ -75,8 +76,9 @@ def gerar_dados(nome, mes, ano, df):
     nome_norm = normalizar(nome)
     df["tempo_segundos"] = df["tempo_disponivel_absoluto"].apply(tempo_para_segundos)
     df["duracao_segundos"] = df["duracao_do_periodo"].apply(tempo_para_segundos)
-    dados = df[(df["pessoa_entregadora_normalizado"] == nome_norm) &
-               (df["mes"] == mes) & (df["ano"] == ano)]
+    dados = df[(df["pessoa_entregadora_normalizado"] == nome_norm)]
+    if mes and ano:
+        dados = dados[(df["mes"] == mes) & (df["ano"] == ano)]
     if dados.empty:
         return None
 
@@ -85,9 +87,17 @@ def gerar_dados(nome, mes, ano, df):
     tempo_pct = round(tempo_disp / duracao_media * 100, 1) if duracao_media else 0.0
 
     presencas = dados["data"].nunique()
-    dias_no_mes = pd.date_range(start=f"{ano}-{mes:02d}-01", periods=31, freq='D')
-    dias_no_mes = dias_no_mes[dias_no_mes.month == mes]
-    faltas = len(dias_no_mes) - presencas
+    if mes and ano:
+        dias_no_mes = pd.date_range(start=f"{ano}-{mes:02d}-01", periods=31, freq='D')
+        dias_no_mes = dias_no_mes[dias_no_mes.month == mes]
+        faltas = len(dias_no_mes) - presencas
+        dias_esperados = len(dias_no_mes)
+    else:
+        min_data = dados["data"].min()
+        max_data = dados["data"].max()
+        dias_esperados = (max_data - min_data).days + 1
+        faltas = dias_esperados - presencas
+
     turnos = len(dados)
 
     ofertadas = int(dados["numero_de_corridas_ofertadas"].sum())
@@ -99,15 +109,20 @@ def gerar_dados(nome, mes, ano, df):
     tx_rejeitadas = round(rejeitadas / ofertadas * 100, 1) if ofertadas else 0.0
     tx_completas = round(completas / aceitas * 100, 1) if aceitas else 0.0
 
-    meses_pt = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
-    periodo = f"{meses_pt[mes - 1]}/{ano}"
+    if mes and ano:
+        meses_pt = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
+        periodo = f"{meses_pt[mes - 1]}/{ano}"
+    else:
+        min_data = dados["data"].min().strftime('%d/%m/%Y')
+        max_data = dados["data"].max().strftime('%d/%m/%Y')
+        periodo = f"{min_data} a {max_data}"
 
-    return gerar_texto(nome, periodo, len(dias_no_mes), presencas, faltas, tempo_pct,
+    return gerar_texto(nome, periodo, dias_esperados, presencas, faltas, tempo_pct,
                        turnos, ofertadas, aceitas, rejeitadas, completas,
                        tx_aceitas, tx_rejeitadas, tx_completas)
 
-# ===== LEITURA DO GOOGLE DRIVE =====
+# ===== LEITURA DA PLANILHA DO GOOGLE DRIVE =====
 @st.cache_data
 def carregar_dados():
     file_id = "1Dmmg1R-xmmC0tfi5-1GVS8KLqhZJUqm5"
@@ -122,10 +137,10 @@ def carregar_dados():
     df["pessoa_entregadora_normalizado"] = df["pessoa_entregadora"].apply(normalizar)
     return df
 
+# ===== INTERFACE =====
 df = carregar_dados()
 entregadores = sorted(df["pessoa_entregadora"].dropna().unique().tolist())
 
-# ===== INTERFACE =====
 if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
     with st.form("formulario"):
         nome = st.selectbox("Nome do entregador:", entregadores)
@@ -163,20 +178,19 @@ if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
                 st.text_area("Resultado:", value=texto or "❌ Nenhum dado encontrado", height=400)
 
             elif modo == "Simplicada (WhatsApp)":
-                ultimos = df["data"].max()
                 meses = sorted(df["data"].dt.to_period("M").unique())[-2:]
                 textos = [gerar_dados(nome, m.month, m.year, df) for m in meses]
                 st.text_area("Resultado:", value="\n\n".join([t for t in textos if t]), height=700)
 
-# ===== ALERTAS DE FALTAS (v1.3) =====
+# ===== ALERTAS DE FALTAS =====
 if modo == "Alertas de Faltas":
     st.subheader("⚠️ Entregadores com 3+ faltas consecutivas")
     hoje = datetime.now().date()
     ultimos_15_dias = hoje - timedelta(days=15)
 
     ativos = df[df["data"] >= ultimos_15_dias]["pessoa_entregadora_normalizado"].unique()
-
     mensagens = []
+
     for nome in ativos:
         entregador = df[df["pessoa_entregadora_normalizado"] == nome]
         if entregador.empty:
