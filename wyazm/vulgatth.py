@@ -181,7 +181,7 @@ if nivel == "admin":
         st.rerun()
 
 # ===== FORMULÁRIO =====
-if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
+if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplificada (WhatsApp)"]:
     with st.form("formulario"):
         nome = st.selectbox("Nome do entregador:", entregadores)
 
@@ -197,7 +197,7 @@ if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
             mes2 = col1.selectbox("2º Mês:", list(range(1, 13)), key="mes2")
             ano2 = col2.selectbox("2º Ano:", sorted(df["ano"].unique(), reverse=True), key="ano2")
         
-        elif modo == "Simplicada (WhatsApp)":
+        elif modo == "Simplificada (WhatsApp)":
             
             col1, col2 = st.columns(2)
             mes1 = col1.selectbox("1º Mês:", list(range(1, 13)), key="mes1_simp")
@@ -225,7 +225,7 @@ if modo in ["Ver 1 mês", "Ver 2 meses", "Ver geral", "Simplicada (WhatsApp)"]:
                 texto = gerar_dados(nome, None, None, df[df["pessoa_entregadora"] == nome])
                 st.text_area("Resultado:", value=texto or "❌ Nenhum dado encontrado", height=400)
             
-            elif modo == "Simplicada (WhatsApp)":
+            elif modo == "Simplificada (WhatsApp)":
                     t1 = gerar_simplicado(nome, mes1, ano1, df)
                     t2 = gerar_simplicado(nome, mes2, ano2, df)
                     if t1 or t2:
