@@ -37,7 +37,7 @@ modo = st.sidebar.radio("Escolha uma opção:", [
     "Ver 1 mês",
     "Ver 2 meses",
     "Ver geral",
-    "Simplicada (WhatsApp)",
+    "Simplificada (WhatsApp)",
     "Alertas de Faltas"
 ])
 
