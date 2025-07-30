@@ -1,5 +1,0 @@
-streamlit
-pandas
-gdown
-openpyxl
-plotly
